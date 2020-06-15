@@ -241,25 +241,7 @@ func IsValidIP(ip string) bool {
 
 // GetAllIPs returns all non-loopback IPV4 addresses.
 func GetAllIPs() (ipList []string, err error) {
-	// get system's hostname
-	hostname, err := os.Hostname()
-	if err != nil {
-		return nil, err
-	}
-	// query host ip from local dns
-	addrs, err := net.LookupIP(hostname)
-	if err != nil {
-		return nil, err
-	}
-	// filter all loopback addresses.
-	for _, ip := range addrs {
-		if !ip.IsLoopback() {
-			if ip.To4() != nil {
-				ipList = append(ipList, ip.String())
-			}
-		}
-	}
-	return
+	return httputils.LookUpSelfIPs()
 }
 
 // ConvertTimeStringToInt converts a string time to an int64 timestamp.

@@ -27,6 +27,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -393,8 +394,40 @@ func CheckConnect(ip string, port int, timeout int) (localIP string, e error) {
 			localIP = localIP[:idx]
 		}
 	}
+	// if localIP equal supernode ip fallback to use nslookup to get localIP
+	if ip == localIP {
+		if ipList, err := LookUpSelfIPs(); err != nil {
+			return localIP, err
+		} else {
+			localIP = ipList[0]
+		}
+	}
 	return
 }
+
+// LookUpSelfIPs  returns all non-loopback IPV4 addresses in hostname.
+func LookUpSelfIPs() (ipList []string, err error) {
+	// get system's hostname
+	hostname, err := os.Hostname()
+	if err != nil {
+		return nil, err
+	}
+	// query host ip from local dns
+	addrs, err := net.LookupIP(hostname)
+	if err != nil {
+		return nil, err
+	}
+	// filter all loopback addresses.
+	for _, ip := range addrs {
+		if !ip.IsLoopback() {
+			if ip.To4() != nil {
+				ipList = append(ipList, ip.String())
+			}
+		}
+	}
+	return
+}
+
 
 // ConstructRangeStr wraps the rangeStr as a HTTP Range header value.
 func ConstructRangeStr(rangeStr string) string {
