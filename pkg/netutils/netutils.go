@@ -241,17 +241,21 @@ func IsValidIP(ip string) bool {
 
 // GetAllIPs returns all non-loopback IPV4 addresses.
 func GetAllIPs() (ipList []string, err error) {
-	// get all system's unicast interface addresses.
-	addrs, err := net.InterfaceAddrs()
+	// get system's hostname
+	hostname, err := os.Hostname()
 	if err != nil {
 		return nil, err
 	}
-
+	// query host ip from local dns
+	addrs, err := net.LookupIP(hostname)
+	if err != nil {
+		return nil, err
+	}
 	// filter all loopback addresses.
-	for _, v := range addrs {
-		if ipNet, ok := v.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
-			if ipNet.IP.To4() != nil {
-				ipList = append(ipList, ipNet.IP.String())
+	for _, ip := range addrs {
+		if !ip.IsLoopback() {
+			if ip.To4() != nil {
+				ipList = append(ipList, ip.String())
 			}
 		}
 	}
